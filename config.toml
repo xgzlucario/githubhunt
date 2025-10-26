@@ -1,0 +1,8 @@
+[meili]
+host = "localhost"
+port = 17700
+master_key = "3pEMr22-fnvK5-Bk0KDuPMddtcZ23cgvPHbRQq_Bvao"
+
+[app]
+github_token = "github_pat_xxxxxx"
+deepseek_api_key = "sk-xxxxxx"

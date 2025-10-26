@@ -1,0 +1,14 @@
+[project]
+name = "githubhunt"
+version = "0.1.0"
+description = ""
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "openai>=2.6.1",
+    "agno>=2.2.1",
+    "toml>=0.10.2",
+    "pandas>=2.3.3",
+    "pygithub>=2.8.1",
+    "meilisearch>=0.37.1",
+]
