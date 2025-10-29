@@ -10,6 +10,7 @@ githubhunt 是一个基于 AI Agent 的自然语言 Github 仓库搜索工具, �
 
 除此以外, Agent 还支持:
 
+- 使用视觉理解模型分析仓库, 例如: "解释 xgzlucario/rotom 的流程图"
 - 从用户的 starred 列表中搜索, 例如: "从我的关注列表中查找监控相关的项目, 我是 xgzlucario"
 - 总结或解释仓库的功能: 例如: xgalucario/githubhunt 仓库是做什么的?
 
@@ -23,6 +24,7 @@ githubhunt 是一个基于 AI Agent 的自然语言 Github 仓库搜索工具, �
 
 - `fetch_repos.py`: 拉取 Github 仓库并保存到 MeiliSearch
 - `agent.py`: 使用 Agent 进行搜索
+- `browser.py`: 浏览器截图工具, 用于视觉分析
 - `db.py`: MeiliSearch 索引构建定义和 db 操作封装
 - `config.toml`: 配置文件
 
@@ -30,7 +32,7 @@ githubhunt 是一个基于 AI Agent 的自然语言 Github 仓库搜索工具, �
 
 ### 环境配置
 
-在 `config.toml` 中配置 Github Token(必需) 和 DeepSeek API_KEY(必需) 或者其他模型调用配置.
+在 `config.toml` 中配置 Github Token(必需) 和 DeepSeek API_KEY(必需) 或者其他模型调用配置, 如果需要使用视觉分析工具, 还需要配置 QWEN_API_KEY.
 
 ### 启动 MeiliSearch
 
@@ -38,16 +40,24 @@ githubhunt 是一个基于 AI Agent 的自然语言 Github 仓库搜索工具, �
 docker compose up -d
 ```
 
+### 安装依赖
+
+首先确保安装了 [uv](https://docs.astral.sh/uv/) 工具, 然后执行命令:
+
+```bash
+uv sync
+```
+
 ### 拉取 Github 仓库
 
 第一次运行时需要同步 Github 仓库到 MeiliSearch, 后续可以按需定期同步.
 
 ```bash
-python fetch_repos.py
+uv run fetch_repos.py
 ```
 
 ### 使用 Agent 进行搜索
 
 ```bash
-python agent.py
+uv run agent.py --query "查找 golang 实现的 redis 服务器, 基于 AELoop"
 ```

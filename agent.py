@@ -1,9 +1,16 @@
+import argparse
+import asyncio
+import base64
+import io
+
 import pandas as pd
 import toml
 from agno.agent import Agent
 from agno.models.deepseek import DeepSeek
 from github import Auth, Github, Repository
+from openai import OpenAI
 
+from browser import take_screenshot
 from db import meili_client
 
 config = toml.load("config.toml")
@@ -99,7 +106,7 @@ def get_repo_readme(full_name: str) -> str:
         str: The README content in markdown format.
     """
 
-    repo = github_cli.get_repo(full_name)
+    repo = github_cli.get_repo(full_name, lazy=True)
     if not repo:
         return "Error: Repository not found"
 
@@ -111,6 +118,60 @@ def get_repo_readme(full_name: str) -> str:
         return "Error: README not found"
 
 
+def visualize_repo_readme(full_name: str, query: str) -> str:
+    """
+    Visualize the README content of the repository.
+
+    Args:
+        full_name (str): The full name of the repository.
+        query (str): The query to ask about the repository.
+
+    Returns:
+        str: The visualized result of README content.
+    """
+
+    repo = github_cli.get_repo(full_name, lazy=True)
+    if not repo:
+        return "Error: Repository not found"
+
+    readme_url = repo.get_readme().html_url
+    images = asyncio.run(take_screenshot(url=readme_url))
+
+    # analyze the images
+    client = OpenAI(
+        base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+        api_key=config["app"]["qwen_api_key"],
+    )
+
+    contents = []
+    for image in images:
+        buffer = io.BytesIO()
+        image.save(buffer, format='PNG')
+        image_bytes = buffer.getvalue()
+        image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+        contents.append({
+            "type": "image_url", 
+            "image_url": {
+                "url": f"data:image/png;base64,{image_base64}",
+            }
+        })
+
+    contents.append({
+        "type": "text",
+        "text": query
+    })
+
+    response = client.chat.completions.create(
+        model="qwen3-vl-plus",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant that can analyze images."},
+            {"role": "user", "content": contents}
+    ]
+    )
+
+    return response.choices[0].message.content
+
+
 SYSTEM_PROMPT = """
 你是一个 GitHub 仓库搜索助手, 你能够理解用户意图, 合理规划并使用多种工具, 帮助用户找到具有高度相关性的仓库, 并最终输出报告
 请严格遵守以下规则:
@@ -119,15 +180,30 @@ SYSTEM_PROMPT = """
 3. 调用过程中不限制使用中文或者英文, 但最终报告必须使用中文并且以 Markdown 格式输出
 """
 
-api_key = config["app"]["deepseek_api_key"]
-
-agent = Agent(
-    name="Github Agent",
-    instructions=SYSTEM_PROMPT,
-    model=DeepSeek(id="deepseek-chat", api_key=api_key),
-    tools=[search_repositories, get_repo_readme, get_user_starred],
-    markdown=True,
-)
 
 if __name__ == "__main__":
-    agent.print_response("查找 golang 实现的 redis 服务器, 基于 AELoop", stream=True, stream_events=True)
+    # 参数解析
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--query", type=str, required=True, help="查询语句")
+    parser.add_argument("--visual", action="store_true", help="是否使用视觉分析工具(需要配置 QWEN_API_KEY)")
+    parser.add_argument("--debug", action="store_true", help="开启调试模式")
+    args = parser.parse_args()
+
+    tools = [search_repositories, get_user_starred]
+    if args.visual:
+        tools.append(visualize_repo_readme)
+    else:
+        tools.append(get_repo_readme)
+
+    # 创建 Agent
+    agent = Agent(
+        name="Github Agent",
+        instructions=SYSTEM_PROMPT,
+        model=DeepSeek(id="deepseek-chat", api_key=config["app"]["deepseek_api_key"]),
+        markdown=True,
+        tools=tools,
+        debug_mode=args.debug,
+    )
+    
+    # 运行
+    agent.print_response(args.query, stream=True, stream_events=True)
