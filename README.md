@@ -61,3 +61,9 @@ uv run fetch_repos.py
 ```bash
 uv run agent.py --query "查找 golang 实现的 redis 服务器, 基于 AELoop"
 ```
+
+使用视觉分析工具:
+
+```bash
+uv run agent.py --query "解释 xgzlucario/rotom 的流程图" --visual
+```
