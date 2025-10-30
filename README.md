@@ -32,7 +32,7 @@ githubhunt 是一个基于 AI Agent 的自然语言 Github 仓库搜索工具, �
 
 ### 环境配置
 
-在 `config.toml` 中配置 Github Token(必需) 和 DeepSeek API_KEY(必需) 或者其他模型调用配置, 如果需要使用视觉分析工具, 还需要配置 QWEN_API_KEY.
+在 `config.toml` 中配置 Github Token(必需) 和 DeepSeek API_KEY(必需) 或者其他模型调用配置, 如果需要使用视觉分析工具, 还需要配置 QWEN_API_KEY。
 
 ### 启动 MeiliSearch
 
@@ -50,7 +50,9 @@ uv sync
 
 ### 拉取 Github 仓库
 
-第一次运行时需要同步 Github 仓库到 MeiliSearch, 后续可以按需定期同步.
+第一次运行时需要同步 Github 仓库到 MeiliSearch, 后续可以按需定期同步。
+
+在本地构建索引可以大大提升搜索性能, 原因是本地使用 `frequency` 的[匹配策略](https://www.meilisearch.com/docs/reference/api/search#matching-strategy), 相比 Github API 的 `all` 策略, 每次搜索的召回率更高, 返回的结果数量更多, 更容易命中目标仓库。
 
 ```bash
 uv run fetch_repos.py
