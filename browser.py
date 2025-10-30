@@ -1,5 +1,6 @@
 import asyncio
 import os
+import time
 
 from PIL import Image
 from pydoll.browser import Chrome
@@ -32,7 +33,7 @@ class Browser:
             await tab.go_to(url)
 
             # 等待页面加载完成
-            await asyncio.sleep(3)
+            await tab._wait_page_load()
 
             os.makedirs(os.path.dirname(path), exist_ok=True)
             await tab.take_screenshot(path=path, quality=quality, beyond_viewport=True)
@@ -57,8 +58,12 @@ async def main():
     async with Browser() as browser:
         url = 'https://github.com/xgzlucario/githubhunt/blob/master/README.md'
 
-        for i in range(10):
+        for i in range(3):
+            start_time = time.time()
             images = await browser.take_screenshot(url=url, path='images/readme.png')
+            end_time = time.time()
+            print(f'Time taken: {end_time - start_time} seconds')
+
             for i, image in enumerate(images):
                 image.save(f'images/readme_{i}.png')
 
