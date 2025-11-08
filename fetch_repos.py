@@ -30,7 +30,7 @@ def main():
 
     meili_client.create_index_repositories()
 
-    # github search_repositories 每次拉取上限为 1000 条, 分批多次拉取
+    # 每次拉取上限为 1000 条, 分批多次拉取
     stars_range = [
         "1000..1200",
         "1200..1500",
@@ -50,6 +50,12 @@ def main():
         "Rust",
         "JavaScript",
         "TypeScript",
+        "HTML",
+        "CSS",
+        "Shell",
+        "C",
+        "C++",
+        "C#",
     ]
 
     queries = []
