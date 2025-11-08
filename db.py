@@ -42,6 +42,11 @@ class MeiliClient:
         docs = []
         
         for repo in repos:
+            # 低质量仓库过滤
+            if repo.description and len(repo.description) > 1024:
+                print(f"Low quality repo: {repo.full_name}, description length: {len(repo.description)}")
+                continue
+            
             docs.append({
                 "id": repo.id,
                 "full_name": repo.full_name,

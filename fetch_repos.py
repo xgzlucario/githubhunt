@@ -32,7 +32,8 @@ def main():
 
     # github search_repositories 每次拉取上限为 1000 条, 分批多次拉取
     stars_range = [
-        "1000..1500",
+        "1000..1200",
+        "1200..1500",
         "1500..2000",
         "2000..3000",
         "3000..4000",
@@ -58,7 +59,7 @@ def main():
             queries.append(query)
 
     # 并发执行
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=5) as executor:
         futures = [executor.submit(fetcher.fetch_repos, query) for query in queries]
         for future in futures:
             future.result()
