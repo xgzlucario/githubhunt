@@ -62,6 +62,10 @@ def api_search(query: str, languages: list[str], limit: int = 10) -> list[dict]:
     
     results = []
     for repo in repos:
+        # 低质量仓库过滤
+        if repo.description and len(repo.description) > 1024:
+            continue
+
         repo_info = repo_to_dict(repo)
         repo_info['_rankingScore'] = 0.5
         results.append(repo_info)
