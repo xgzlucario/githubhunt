@@ -50,15 +50,14 @@ def get_user_starred(username: str) -> list[dict]:
     return results
 
 
-def api_search(query: str, languages: list[str], limit: int = 10) -> list[dict]:
-    g = Github(per_page=limit)     
+def api_search(query: str, languages: list[str], limit: int = 10) -> list[dict]:     
     query = f"{query} in:name,description,topics"
 
     if len(languages) > 0:
         language_query = " ".join([f"language:{language}" for language in languages])
         query += f" {language_query}"
         
-    repos = list(g.search_repositories(query, sort='stars', order='desc'))
+    repos = list(github_cli.search_repositories(query, sort='stars', order='desc'))
     
     results = []
     for repo in repos:

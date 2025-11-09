@@ -31,38 +31,23 @@ def main():
     meili_client.create_index_repositories()
 
     # 每次拉取上限为 1000 条, 分批多次拉取
-    stars_range = [
-        "1000..1200",
-        "1200..1500",
-        "1500..2000",
-        "2000..3000",
-        "3000..4000",
-        "4000..6000",
-        "6000..10000",
-        ">10000"
-    ]
+    stars_range = []
 
-    # 添加你想要拉取的语言
-    languages = [
-        "Go",
-        "Java",
-        "Python",
-        "Rust",
-        "JavaScript",
-        "TypeScript",
-        "HTML",
-        "CSS",
-        "Shell",
-        "C",
-        "C++",
-        "C#",
-    ]
+    for i in range(1000, 5000, 20):
+        stars_range.append(f"{i}..{i+20}")
+
+    for i in range(5000, 10000, 200):
+        stars_range.append(f"{i}..{i+200}")
+
+    for i in range(10000, 50000, 2000):
+        stars_range.append(f"{i}..{i+2000}")
+
+    stars_range.append(">50000")
 
     queries = []
     for stars in stars_range:
-        for language in languages:
-            query = f"stars:{stars} pushed:>2025-01-01 language:{language} archived:false"
-            queries.append(query)
+        query = f"stars:{stars} pushed:>2025-01-01 archived:false"
+        queries.append(query)
 
     # 并发执行
     with ThreadPoolExecutor(max_workers=5) as executor:
