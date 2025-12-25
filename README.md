@@ -66,13 +66,13 @@ uv run fetch_repos.py
 uv run agent.py --query "查找 golang 实现的 redis 服务器, 基于 AELoop"
 ```
 
-使用视觉分析工具:
-
 如果需要使用视觉分析工具, 首先需要安装 [Steel Browser](https://github.com/steel-dev/steel-browser), 命令如下:
 
 ```bash
 sudo docker run --name steel-browser-api -d -p 3000:3000 -p 9223:9223 ghcr.io/steel-dev/steel-browser-api:latest
 ```
+
+然后使用视觉分析工具:
 
 ```bash
 uv run agent.py --query "解释 xgzlucario/rotom 的流程图" --visual
