@@ -13,4 +13,5 @@ dependencies = [
     "meilisearch>=0.37.1",
     "pydoll-python>=2.9.2",
     "pillow>=12.0.0",
+    "ruff>=0.14.10",
 ]

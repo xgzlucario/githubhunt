@@ -1,2 +1,3 @@
-isort:
-	isort .
+ruff:
+	ruff check
+	ruff format
