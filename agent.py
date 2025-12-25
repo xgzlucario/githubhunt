@@ -10,16 +10,13 @@ from agno.models.deepseek import DeepSeek
 from github import Auth, Github, Repository
 from openai import OpenAI
 
-from browser import Browser
+from browser import take_screenshot
 from db import meili_client
 
 config = toml.load("config.toml")
 github_token = config["app"]["github_token"]
 
 github_cli = Github(auth=Auth.Token(github_token), per_page=100)
-
-# browser instance
-_browser: Browser | None = None
 
 
 def repo_to_dict(repo: Repository) -> dict:
@@ -130,16 +127,16 @@ def get_repo_readme(full_name: str) -> str:
         return "Error: README not found"
 
 
-async def visualize_repo_readme(full_name: str, query: str) -> str:
+def view_repo_readme(full_name: str, query: str) -> str:
     """
-    Visualize the README content of the repository.
+    View and ask for the README content of the repository by browser.
 
     Args:
         full_name (str): The full name of the repository.
         query (str): The query to ask about the repository.
 
     Returns:
-        str: The visualized result of README content.
+        str: The result of the query.
     """
 
     repo = github_cli.get_repo(full_name, lazy=True)
@@ -148,7 +145,7 @@ async def visualize_repo_readme(full_name: str, query: str) -> str:
 
     readme_url = repo.get_readme().html_url
 
-    images = await _browser.take_screenshot(url=readme_url)
+    images = take_screenshot(url=readme_url)
 
     # analyze the images
     client = OpenAI(
@@ -174,11 +171,11 @@ async def visualize_repo_readme(full_name: str, query: str) -> str:
     contents.append({"type": "text", "text": query})
 
     response = client.chat.completions.create(
-        model="qwen3-vl-plus-2025-12-19",
+        model="qwen3-vl-plus",
         messages=[
             {
                 "role": "system",
-                "content": "You are a helpful assistant that can analyze images.",
+                "content": "You are a helpful assistant that can analyze images. If the screenshot is empty or not clear, raise an error.",
             },
             {"role": "user", "content": contents},
         ],
@@ -200,7 +197,6 @@ async def main():
     # 参数解析
     parser = argparse.ArgumentParser()
     parser.add_argument("--query", type=str, required=True, help="查询语句")
-    parser.add_argument("--binary-path", type=str, help="浏览器驱动路径")
     parser.add_argument(
         "--visual",
         action="store_true",
@@ -211,7 +207,7 @@ async def main():
 
     tools = [search_repositories, get_user_starred]
     if args.visual:
-        tools.append(visualize_repo_readme)
+        tools.append(view_repo_readme)
     else:
         tools.append(get_repo_readme)
 
@@ -219,24 +215,13 @@ async def main():
     agent = Agent(
         name="Github Agent",
         instructions=SYSTEM_PROMPT,
-        model=DeepSeek(
-            id="deepseek-chat", api_key=config["app"]["deepseek_api_key"]
-        ),
+        model=DeepSeek(id="deepseek-chat", api_key=config["app"]["deepseek_api_key"]),
         markdown=True,
         tools=tools,
         debug_mode=args.debug,
     )
 
-    if args.visual:
-        # 初始化 Browser
-        async with Browser(binary_path=args.binary_path) as browser:
-            global _browser
-            _browser = browser
-
-            await agent.aprint_response(args.query, stream=True, stream_events=True)
-
-    else:
-        await agent.aprint_response(args.query, stream=True, stream_events=True)
+    await agent.aprint_response(args.query, stream=True, stream_events=True)
 
 
 if __name__ == "__main__":

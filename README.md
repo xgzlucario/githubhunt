@@ -19,12 +19,14 @@ githubhunt 是一个基于 AI Agent 的自然语言 Github 仓库搜索工具, �
 - [MeiliSearch](https://github.com/meilisearch/meilisearch)
 - Python 3.13
 - DeepSeek API
+- Steel Browser(可选, 用于视觉分析)
+- QWEN API(可选, 用于视觉分析)
 
 ## 项目结构
 
 - `fetch_repos.py`: 拉取 Github 仓库并保存到 MeiliSearch
 - `agent.py`: 使用 Agent 进行搜索
-- `browser.py`: 浏览器截图工具, 用于视觉分析
+- `browser.py`: 调用浏览器截图工具, 用于视觉分析
 - `db.py`: MeiliSearch 索引构建定义和 db 操作封装
 - `config.toml`: 配置文件
 
@@ -32,7 +34,7 @@ githubhunt 是一个基于 AI Agent 的自然语言 Github 仓库搜索工具, �
 
 ### 环境配置
 
-在 `config.toml` 中配置 Github Token(必需) 和 DeepSeek API_KEY(必需) 或者其他模型调用配置, 如果需要使用视觉分析工具, 还需要配置 QWEN_API_KEY。
+在 `config.toml` 中配置 Github Token(必需) 和 DeepSeek API_KEY(必需) 或者其他模型调用配置, 如果需要使用视觉分析工具, 还需要安装 Steel Browser 并配置 QWEN_API_KEY。
 
 ### 启动 MeiliSearch
 
@@ -65,6 +67,12 @@ uv run agent.py --query "查找 golang 实现的 redis 服务器, 基于 AELoop"
 ```
 
 使用视觉分析工具:
+
+如果需要使用视觉分析工具, 首先需要安装 [Steel Browser](https://github.com/steel-dev/steel-browser), 命令如下:
+
+```bash
+sudo docker run --name steel-browser-api -d -p 3000:3000 -p 9223:9223 ghcr.io/steel-dev/steel-browser-api:latest
+```
 
 ```bash
 uv run agent.py --query "解释 xgzlucario/rotom 的流程图" --visual
