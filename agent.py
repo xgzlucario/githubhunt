@@ -24,14 +24,14 @@ _browser: Browser | None = None
 
 def repo_to_dict(repo: Repository) -> dict:
     return {
-        'id': repo.id,
-        'full_name': repo.full_name,
-        'description': repo.description,
-        'language': repo.language,
-        'stars': repo.stargazers_count,
-        'created_at': repo.created_at.date().isoformat(),
-        'pushed_at': repo.pushed_at.date().isoformat(),
-        'topics': repo.topics
+        "id": repo.id,
+        "full_name": repo.full_name,
+        "description": repo.description,
+        "language": repo.language,
+        "stars": repo.stargazers_count,
+        "created_at": repo.created_at.date().isoformat(),
+        "pushed_at": repo.pushed_at.date().isoformat(),
+        "topics": repo.topics,
     }
 
 
@@ -50,15 +50,15 @@ def get_user_starred(username: str) -> list[dict]:
     return results
 
 
-def api_search(query: str, languages: list[str], limit: int = 10) -> list[dict]:     
+def api_search(query: str, languages: list[str], limit: int = 10) -> list[dict]:
     query = f"{query} in:name,description,topics"
 
     if len(languages) > 0:
         language_query = " ".join([f"language:{language}" for language in languages])
         query += f" {language_query}"
-        
-    repos = list(github_cli.search_repositories(query, sort='stars', order='desc'))
-    
+
+    repos = list(github_cli.search_repositories(query, sort="stars", order="desc"))
+
     results = []
     for repo in repos:
         # 低质量仓库过滤
@@ -66,13 +66,15 @@ def api_search(query: str, languages: list[str], limit: int = 10) -> list[dict]:
             continue
 
         repo_info = repo_to_dict(repo)
-        repo_info['_rankingScore'] = 0.5
+        repo_info["_rankingScore"] = 0.5
         results.append(repo_info)
-        
+
     return results[:limit]
 
 
-def search_repositories(query: str, languages: list[str], top_k: int = 20) -> list[dict]:
+def search_repositories(
+    query: str, languages: list[str], top_k: int = 20
+) -> list[dict]:
     """
     Search Github repositories by repository name, description, topics and languages.
 
@@ -84,21 +86,25 @@ def search_repositories(query: str, languages: list[str], top_k: int = 20) -> li
     Returns:
         list[dict]: The list of repositories.
     """
-       
-    db_results = meili_client.search_repositories(query=query, languages=languages, top_k=int(top_k * 0.7))
+
+    db_results = meili_client.search_repositories(
+        query=query, languages=languages, top_k=int(top_k * 0.7)
+    )
     api_results = api_search(query=query, languages=languages, limit=int(top_k * 0.3))
 
     df = pd.DataFrame(db_results + api_results)
     if df.empty:
         return []
-    
-    df = (df.sort_values(by='_rankingScore', ascending=False)
-          .drop_duplicates(subset='id')
-          .head(top_k))
-    
-    df = df[['full_name', 'description', 'language', 'topics', 'stars', 'created_at']]
- 
-    return df.to_dict(orient='records')
+
+    df = (
+        df.sort_values(by="_rankingScore", ascending=False)
+        .drop_duplicates(subset="id")
+        .head(top_k)
+    )
+
+    df = df[["full_name", "description", "language", "topics", "stars", "created_at"]]
+
+    return df.to_dict(orient="records")
 
 
 def get_repo_readme(full_name: str) -> str:
@@ -118,7 +124,7 @@ def get_repo_readme(full_name: str) -> str:
 
     readme = repo.get_readme()
     if readme:
-        content = readme.decoded_content.decode('utf-8')
+        content = readme.decoded_content.decode("utf-8")
         return content
     else:
         return "Error: README not found"
@@ -141,7 +147,7 @@ async def visualize_repo_readme(full_name: str, query: str) -> str:
         return "Error: Repository not found"
 
     readme_url = repo.get_readme().html_url
-    
+
     images = await _browser.take_screenshot(url=readme_url)
 
     # analyze the images
@@ -153,27 +159,29 @@ async def visualize_repo_readme(full_name: str, query: str) -> str:
     contents = []
     for image in images:
         buffer = io.BytesIO()
-        image.save(buffer, format='PNG')
+        image.save(buffer, format="PNG")
         image_bytes = buffer.getvalue()
-        image_base64 = base64.b64encode(image_bytes).decode('utf-8')
-        contents.append({
-            "type": "image_url", 
-            "image_url": {
-                "url": f"data:image/png;base64,{image_base64}",
+        image_base64 = base64.b64encode(image_bytes).decode("utf-8")
+        contents.append(
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:image/png;base64,{image_base64}",
+                },
             }
-        })
+        )
 
-    contents.append({
-        "type": "text",
-        "text": query
-    })
+    contents.append({"type": "text", "text": query})
 
     response = client.chat.completions.create(
-        model="qwen3-vl-plus",
+        model="qwen3-vl-plus-2025-12-19",
         messages=[
-            {"role": "system", "content": "You are a helpful assistant that can analyze images."},
-            {"role": "user", "content": contents}
-    ]
+            {
+                "role": "system",
+                "content": "You are a helpful assistant that can analyze images.",
+            },
+            {"role": "user", "content": contents},
+        ],
     )
 
     return response.choices[0].message.content
@@ -192,7 +200,11 @@ async def main():
     # 参数解析
     parser = argparse.ArgumentParser()
     parser.add_argument("--query", type=str, required=True, help="查询语句")
-    parser.add_argument("--visual", action="store_true", help="是否使用视觉分析工具(需要配置 QWEN_API_KEY)")
+    parser.add_argument(
+        "--visual",
+        action="store_true",
+        help="是否使用视觉分析工具(需要配置 QWEN_API_KEY)",
+    )
     parser.add_argument("--debug", action="store_true", help="开启调试模式")
     args = parser.parse_args()
 
@@ -202,22 +214,27 @@ async def main():
     else:
         tools.append(get_repo_readme)
 
-    # 初始化 Browser
-    async with Browser() as browser:
-        global _browser
-        _browser = browser
+    # 创建 Agent
+    agent = Agent(
+        name="Github Agent",
+        instructions=SYSTEM_PROMPT,
+        model=DeepSeek(
+            id="deepseek-chat", api_key=config["app"]["deepseek_api_key"]
+        ),
+        markdown=True,
+        tools=tools,
+        debug_mode=args.debug,
+    )
 
-        # 创建 Agent
-        agent = Agent(
-            name="Github Agent",
-            instructions=SYSTEM_PROMPT,
-            model=DeepSeek(id="deepseek-chat", api_key=config["app"]["deepseek_api_key"]),
-            markdown=True,
-            tools=tools,
-            debug_mode=args.debug,
-        )
-        
-        # 运行
+    if args.visual:
+        # 初始化 Browser
+        async with Browser() as browser:
+            global _browser
+            _browser = browser
+
+            await agent.aprint_response(args.query, stream=True, stream_events=True)
+
+    else:
         await agent.aprint_response(args.query, stream=True, stream_events=True)
 
 
