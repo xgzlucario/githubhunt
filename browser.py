@@ -8,12 +8,14 @@ from pydoll.browser.options import ChromiumOptions
 
 
 class Browser:
-    def __init__(self):
+    def __init__(self, binary_path: str):
         options = ChromiumOptions()
         options.add_argument("--headless=new")
         options.add_argument("--disable-notifications")
         options.add_argument("--window-size=1000,1000")
-
+        if binary_path:
+            options.binary_location = binary_path
+            
         self.browser = Chrome(options=options)
 
     async def __aenter__(self):

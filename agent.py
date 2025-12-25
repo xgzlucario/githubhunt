@@ -200,6 +200,7 @@ async def main():
     # 参数解析
     parser = argparse.ArgumentParser()
     parser.add_argument("--query", type=str, required=True, help="查询语句")
+    parser.add_argument("--binary-path", type=str, help="浏览器驱动路径")
     parser.add_argument(
         "--visual",
         action="store_true",
@@ -228,7 +229,7 @@ async def main():
 
     if args.visual:
         # 初始化 Browser
-        async with Browser() as browser:
+        async with Browser(binary_path=args.binary_path) as browser:
             global _browser
             _browser = browser
 
